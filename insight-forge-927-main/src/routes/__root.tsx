@@ -151,6 +151,28 @@ function RootComponent() {
     return () => sub.subscription.unsubscribe();
   }, [router, queryClient]);
 
+  useEffect(() => {
+    try {
+      if (typeof document === 'undefined') return;
+      // Remove any branding or badges injected by third-party tooling (e.g., Lovable).
+      // Targets anchors that link to lovable domains and elements that include the phrase.
+      const anchors = Array.from(document.querySelectorAll('a[href*="lovable.app"], a[href*="lovable.dev"], a[href*="lovable"]'));
+      anchors.forEach((a) => a.remove());
+
+      // Also remove elements whose text contains 'Made with' and 'lovable' (case-insensitive).
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT, null);
+      const toRemove: Element[] = [];
+      while (walker.nextNode()) {
+        const el = walker.currentNode as Element;
+        const text = el.textContent ?? '';
+        if (/made with/i.test(text) && /lovable/i.test(text)) toRemove.push(el);
+      }
+      toRemove.forEach((el) => el.remove());
+    } catch (e) {
+      // swallow errors intentionally; this is a benign DOM manipulation
+    }
+  }, []);
+
   const showFab = pathname.startsWith("/dashboard") ||
     pathname.startsWith("/features") ||
     pathname.startsWith("/roadmap") ||
